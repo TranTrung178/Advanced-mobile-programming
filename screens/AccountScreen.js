@@ -19,7 +19,7 @@ const AccountScreen = () => {
 
             try {
                 const response = await axios.get(
-                    `http://192.168.1.33:8080/api/v1/auth/user/${userId}`,
+                    `http://192.168.1.124:8080/api/v1/auth/user/${userId}`,
                     {
                         headers: { Authorization: `Bearer ${token}` },
                     }
@@ -60,8 +60,8 @@ const AccountScreen = () => {
                     </Pressable>
 
                     {/* Nút chỉnh sửa thông tin */}
-                    <Pressable style={styles.button} onPress={() => navigation.replace("EditAccount", { user })}>
-                        <Text style={styles.buttonText}>Chỉnh sửa thông tin</Text>
+                    <Pressable style={styles.button} onPress={() => navigation.navigate("ChangeEmailScreen")}>
+                        <Text style={styles.buttonText}>Thay đổi Email</Text>
                     </Pressable>
 
                     {/* Nút đăng xuất */}

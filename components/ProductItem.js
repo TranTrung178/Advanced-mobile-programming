@@ -6,6 +6,7 @@ import { addToCart } from "../redux/CartReducer";
 const ProductItem = ({ item }) => {
   const [addedToCart, setAddedToCart] = useState(false);
   const dispatch = useDispatch();
+
   const addItemToCart = (item) => {
     setAddedToCart(true);
     dispatch(addToCart(item));
@@ -13,50 +14,33 @@ const ProductItem = ({ item }) => {
       setAddedToCart(false);
     }, 60000);
   };
+
   return (
-    <Pressable style={{ marginHorizontal: 20, marginVertical: 25 }}>
+    <Pressable style={styles.container}>
+      {/* Hiển thị ảnh sản phẩm */}
       <Image
-        style={{ width: 150, height: 150, resizeMode: "contain" }}
-        source={{ uri: item?.image }}
+        style={styles.image}
+        source={{ uri: `data:image/jpeg;base64,${item?.img1}` }} // Đổi `img1` thành base64
       />
 
-      <Text numberOfLines={1} style={{ width: 150, marginTop: 10 }}>
-        {item?.title}
+      {/* Tên sản phẩm */}
+      <Text numberOfLines={1} style={styles.name}>
+        {item?.name}
       </Text>
 
-      <View
-        style={{
-          marginTop: 5,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Text style={{ fontSize: 15, fontWeight: "bold" }}>₹{item?.price}</Text>
-        <Text style={{ color: "#FFC72C", fontWeight: "bold" }}>
-          {item?.rating?.rate} ratings
+      {/* Giá và tình trạng */}
+      <View style={styles.priceRow}>
+        <Text style={styles.price}>₫{item?.price.toLocaleString()}</Text>
+      </View>
+      <View>
+        <Text style={styles.status}>
+          {item?.status === "AVAILABLE" ? "Còn hàng" : "Hết hàng"}
         </Text>
       </View>
 
-      <Pressable
-        onPress={() => addItemToCart(item)}
-        style={{
-          backgroundColor: "#FFC72C",
-          padding: 10,
-          borderRadius: 20,
-          justifyContent: "center",
-          alignItems: "center",
-          marginHorizontal: 10,
-          marginTop: 10,
-        }}
-      >
-        {addedToCart ? (
-          <View>
-            <Text>Added to Cart</Text>
-          </View>
-        ) : (
-          <Text>Add to Cart</Text>
-        )}
+      {/* Nút thêm vào giỏ hàng */}
+      <Pressable onPress={() => addItemToCart(item)} style={styles.button}>
+        <Text>{addedToCart ? "Đã thêm" : "Thêm vào giỏ"}</Text>
       </Pressable>
     </Pressable>
   );
@@ -64,4 +48,45 @@ const ProductItem = ({ item }) => {
 
 export default ProductItem;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  container: {
+    marginHorizontal: 20,
+    marginVertical: 25,
+  },
+  image: {
+    width: 150,
+    height: 150,
+    resizeMode: "contain",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 10,
+  },
+  name: {
+    width: 150,
+    marginTop: 10,
+    fontWeight: "bold",
+  },
+  priceRow: {
+    marginTop: 5,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  price: {
+    fontSize: 15,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  status: {
+    color: "#008000",
+    fontWeight: "bold",
+  },
+  button: {
+    width: 150,
+    backgroundColor: "#FFC72C",
+    padding: 10,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 10,
+  },
+});
