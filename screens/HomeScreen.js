@@ -447,7 +447,69 @@ const HomeScreen = () => {
                 />
               </Pressable>
             ))}
-          </View>
+          </View> */}
+
+      <View style={{ flexDirection: "row", justifyContent: "space-between", marginHorizontal: 10 }}>
+
+        {/* Category list */}
+        <View
+          style={{
+            marginHorizontal: 10,
+            marginTop: 20,
+            width: "45%",
+            marginBottom: open ? 50 : 15,
+          }}
+        >
+          <Text style={{ fontSize: 13, marginBottom: 5, marginLeft: 5, fontWeight: "bold" }}>
+            Category
+          </Text>
+          <DropDownPicker
+            style={{
+              borderColor: "#B7B7B7",
+              height: 20,
+              marginBottom: open ? 50 : 15,
+            }}
+            open={open}
+            value={category} //genderValue
+            items={items}
+            setOpen={setOpen}
+            setValue={setCategory}
+            setItems={setItems}
+            placeholder="choose category"
+            placeholderStyle={styles.placeholderStyles}
+            onOpen={onDropdownOpen}
+            // onChangeValue={onChange}
+            zIndex={3000}
+            zIndexInverse={1000}
+            dropDownDirection="BOTTOM" // Hiển thị dropdown xuống dưới
+            listMode="SCROLLVIEW" // Cho phép scroll nếu danh sách dài
+            maxHeight={250}
+          />
+        </View>
+
+        {/* Sort */}
+        <View style={{ marginHorizontal: 10, marginTop: 20, width: "30%" }}>
+          <Text style={{ fontSize: 13, marginBottom: 5, marginLeft: 5, fontWeight: "bold" }}>
+            Sort
+          </Text>
+          <DropDownPicker
+            style={{ borderColor: "#B7B7B7", height: 40 }}
+            open={openSort}
+            value={sortValue}
+            items={sortOptions}
+            setOpen={setOpenSort}
+            setValue={setSortValue}
+            placeholder="Sắp xếp"
+            placeholderStyle={{ color: "#999" }}
+            dropDownDirection="BOTTOM"
+            listMode="SCROLLVIEW"
+            maxHeight={250}
+            showTickIcon={false}
+          />
+        </View>
+      </View>
+
+
 
       <Text
         style={{
@@ -552,21 +614,7 @@ const HomeScreen = () => {
           )}
         </View>
 
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            {products
-              ?.filter((item) => item.category === category)
-              .map((item, index) => (
-                <ProductItem item={item} key={index} />
-              ))}
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+      </SafeAreaView >
 
       <BottomModal
         onBackdropPress={() => setModalVisible(!modalVisible)}
