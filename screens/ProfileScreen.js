@@ -15,7 +15,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ProfileScreen = () => {
   const { userId, token } = useContext(UserType);
-  console.log(userId, 'prokkk')
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
@@ -70,7 +69,7 @@ const ProfileScreen = () => {
 
       try {
         const response = await axios.get(
-          `http://192.168.1.33:8080/api/v1/user/order/${userId}`,
+          `http://192.168.1.124:8080/api/v1/user/order/${userId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -78,7 +77,6 @@ const ProfileScreen = () => {
 
         console.log("✅ Dữ liệu trả về:", response.data);
 
-        // Nếu API trả về object thay vì mảng, chuyển thành mảng
         const ordersData = Array.isArray(response.data) ? response.data : [response.data];
 
         setOrders(ordersData);

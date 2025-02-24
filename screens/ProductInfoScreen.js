@@ -8,7 +8,7 @@ import {
   ImageBackground,
   Dimensions,
 } from "react-native";
-import React ,{useState} from "react";
+import React, { useState } from "react";
 import { AntDesign, Feather } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";

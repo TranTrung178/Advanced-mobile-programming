@@ -31,25 +31,18 @@ const RegisterScreen = () => {
 
     // send a POST  request to the backend API to register the user
     axios
-      .post("http://192.168.1.33:8080/api/v1/auth/signup", user)
+      .post("http://192.168.1.124:8080/api/v1/auth/signup", user)
       .then((response) => {
         console.log(response);
-        Alert.alert(
-          "Registration successful",
-          "You have been registered Successfully"
-        );
-        setName("");
-        setEmail("");
-        setPassword("");
+        Alert.alert("Registration successful", "Please verify your email with the OTP sent.");
+
+        // Điều hướng đến màn hình VerifyOTP và truyền email để xác thực OTP
+        navigation.navigate("VerifyOTP", { email: email });
       })
       .catch((error) => {
-        console.log(error, 'erregis')
-        Alert.alert(
-          "Registration Error",
-          "An error occurred while registering",
-          error
-        );
-        console.log("registration failed", error);
+        console.log(error);
+        console.log(error.response?.data || error, "erregis");
+        Alert.alert("Registration Error", "An error occurred while registering");
       });
   };
   return (

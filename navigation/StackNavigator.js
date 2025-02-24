@@ -142,6 +142,11 @@ const StackNavigator = () => {
           component={AccountScreen}
           options={{ headerShown: false }}
         />
+        <Stack.Screen
+          name="ChangeEmailScreen"
+          component={ChangeEmailScreen}
+          options={{ headerShown: false }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -28,7 +28,7 @@ const AddressScreen = () => {
         const token = await AsyncStorage.getItem("authToken");
       const decodedToken = jwtDecode(token);
         const userId = decodedToken.userId;
-        setUserId(userId)
+        // setUserId(userId)
     }
 
     fetchUser();

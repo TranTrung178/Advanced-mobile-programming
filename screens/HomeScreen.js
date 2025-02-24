@@ -598,18 +598,25 @@ const HomeScreen = () => {
           backgroundColor: "white",
           // padding : 20,
         }}
-              open={open}
-              value={category} //genderValue
-              items={items}
-              setOpen={setOpen}
-              setValue={setCategory}
-              setItems={setItems}
-              placeholder="choose category"
-              placeholderStyle={styles.placeholderStyles}
-              onOpen={onGenderOpen}
-              // onChangeValue={onChange}
-              zIndex={3000}
-              zIndexInverse={1000}
+      >
+        <View>
+          {/* Danh sách sản phẩm */}
+          {loading ? (
+            <ActivityIndicator size="large" color="blue" />
+          ) : (
+            <FlatList
+              data={products}
+              renderItem={({ item }) => (
+                <View style={{ flex: 1, margin: 5 }}>
+                  <ProductItem item={item} />
+                </View>
+              )}
+              keyExtractor={(item) => item.id.toString()}
+              numColumns={2}
+              columnWrapperStyle={{ justifyContent: "space-between" }}
+              onEndReached={() => fetchProducts(false)}
+              onEndReachedThreshold={0.5}
+              ListFooterComponent={loading ? <ActivityIndicator size="large" color="blue" /> : null}
             />
           )}
         </View>
