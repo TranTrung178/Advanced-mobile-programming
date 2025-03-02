@@ -159,6 +159,8 @@ const HomeScreen = () => {
   const [page, setPage] = useState(1); // Trang hiện tại
   const [loading, setLoading] = useState(false); // Trạng thái tải dữ liệu
   const [hasMore, setHasMore] = useState(true);
+  const [isSorted, setIsSorted] = useState(false);
+
 
   const [addresses, setAddresses] = useState([]);
 
@@ -172,12 +174,12 @@ const HomeScreen = () => {
     {
       label: "Giá tăng dần",
       value: "price_low",
-      icon: () => <Ionicons name="arrow-upward" size={20} color="black" />,
+      icon: () => <Ionicons name="arrow-up" size={20} color="black" />,
     },
     {
       label: "Giá giảm dần",
       value: "price_high",
-      icon: () => <Ionicons name="arrow-downward" size={20} color="black" />,
+      icon: () => <Ionicons name="arrow-down" size={20} color="black" />,
     },
   ]);
 
@@ -185,28 +187,24 @@ const HomeScreen = () => {
   const [selectedAddress, setSelectedAdress] = useState("");
   console.log(selectedAddress)
 
-  // Hàm lấy sản phẩm theo sắp xếp
-  const fetchProducts = async (reset = false) => {
+  const fetchProducts = async () => {
     if (loading || !hasMore) return;
-
     setLoading(true);
-    try {
-      const order = sortValue === "price_high" ? "desc" : "asc";
-      console
-      const response = await axios.get(
-        `http://192.168.1.124:8080/api/v1/product/sort-by`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+    setIsSorted(true);
 
-      const { products: newProducts } = response.data;
+    try {
+      const response = await axios.get(`http://192.168.1.124:8080/api/v1/product/getall/${page}`);
+
+      // Kiểm tra response.data có dữ liệu hay không trước khi chuyển thành mảng
+      const newProducts = response.data.products
+        ? [].concat(response.data.products) // Đảm bảo chuyển thành mảng
+        : [];
 
       if (newProducts.length === 0) {
-        setHasMore(false);
+        setHasMore(false); // Hết dữ liệu
       } else {
-        setProducts((prev) => (reset ? newProducts : [...prev, ...newProducts]));
-        setPage((prevPage) => prevPage + 1);
+        setProducts((prev) => [...prev, ...newProducts]);
+        setPage((prev) => prev + 1); // Tăng page lên
       }
     } catch (error) {
       console.error("Lỗi khi lấy sản phẩm:", error);
@@ -215,17 +213,58 @@ const HomeScreen = () => {
     }
   };
 
-  // Gọi API khi thay đổi sortValue
-  useEffect(() => {
-    setProducts([]); // Reset danh sách sản phẩm
-    setPage(1);
-    setHasMore(true);
-    fetchProducts(true);
-  }, [sortValue]);
+  const fetchProductSort = async (sortValue) => {
+    if (!sortValue) return; // Nếu chưa chọn giá trị sort thì không gọi API
+    setLoading(true);
+    setProducts([])
+    const order = sortValue === "price_high" ? "desc" : "asc";
+    console.log(order,'đewe', sortValue)
+
+    try {
+      const response = await axios.get(
+        `http://192.168.1.124:8080/api/v1/product/sort/${order}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }, // Thêm token nếu cần xác thực
+        }
+      );
+
+      // Kiểm tra response.data có dữ liệu không trước khi chuyển thành mảng
+      const sortedProducts = response.data
+        ? [].concat(response.data)
+        : [];
+
+      setProducts(sortedProducts);
+    } catch (error) {
+      console.error("Lỗi khi lấy sản phẩm theo sort:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetchProducts(); // Gọi API lần đầu khi component mount
+    if (!isSorted) {
+      fetchProducts(); 
+    }
+  }, [isSorted]);
+
+  const [lastProducts, setLastProducts] = useState([]);
+
+  const fetchLast10Products = async () => {
+    try {
+      const response = await axios.get("http://192.168.1.124:8080/api/v1/product/last-10");
+      const products = response.data ? [].concat(response.data) : [];
+      setLastProducts(products);
+    } catch (error) {
+      console.error("Lỗi khi lấy 10 sản phẩm mới nhất:", error);
+    }
+  };
+
+  // Gọi API khi component mount
+  useEffect(() => {
+    fetchLast10Products();
   }, []);
+
+
 
 
   //    Category
@@ -498,7 +537,10 @@ const HomeScreen = () => {
             value={sortValue}
             items={sortOptions}
             setOpen={setOpenSort}
-            setValue={setSortValue}
+            setValue={(val) => {
+              setSortValue(val); // Cập nhật giá trị sort
+              fetchProductSort(sortValue); // Gọi hàm sắp xếp sản phẩm
+            }}
             placeholder="Sắp xếp"
             placeholderStyle={{ color: "#999" }}
             dropDownDirection="BOTTOM"
@@ -507,6 +549,7 @@ const HomeScreen = () => {
             showTickIcon={false}
           />
         </View>
+
       </View>
 
 
@@ -524,7 +567,8 @@ const HomeScreen = () => {
         Today's Deals
       </Text>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      {/* Old 4 product */}
+      {/* <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {offers.map((item, index) => (
           <Pressable
             key={index}
@@ -575,7 +619,68 @@ const HomeScreen = () => {
             </View>
           </Pressable>
         ))}
+      </ScrollView> */}
+
+      {/* 10 new products */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {lastProducts.map((item, index) => (
+          <Pressable
+            key={index}
+            onPress={() =>
+              navigation.navigate("Info", {
+                id: item.id,
+                title: item.title,
+                price: item?.price,
+                carouselImages: item.carouselImages,
+                color: item?.color,
+                size: item?.size,
+                oldPrice: item?.oldPrice,
+                item: item,
+              })
+            }
+            style={{
+              backgroundColor: "#e8e6e5",
+
+              marginVertical: 10,
+              alignItems: "center",
+              justifyContent: "center",
+              marginRight: 5,
+            }}
+          >
+            <Image
+              style={{
+                width: 150, height: 150, borderRadius: 25, // Bán kính = 1/2 chiều rộng/chiều cao để tạo hình tròn
+                resizeMode: "cover", // Để ảnh lấp đầy hình tròn mà không bị méo
+                overflow: "hidden", }}
+              source={{ uri: `data:image/jpeg;base64,${item?.img1}` }}
+            />
+
+            <View
+              style={{
+                backgroundColor: "#E31837",
+                paddingVertical: 5,
+                width: 130,
+                justifyContent: "center",
+                alignItems: "center",
+                marginTop: 10,
+                borderRadius: 4,
+              }}
+            >
+              <Text
+                style={{
+                  textAlign: "center",
+                  color: "white",
+                  fontSize: 13,
+                  fontWeight: "bold",
+                }}
+              >
+                Upto {item?.offer}
+              </Text>
+            </View>
+          </Pressable>
+        ))}
       </ScrollView>
+
 
       <Text
         style={{
@@ -590,175 +695,23 @@ const HomeScreen = () => {
     </View>
   );
   return (
-    <>
-      <SafeAreaView
-        style={{
-          paddinTop: Platform.OS === "android" ? 40 : 0,
-          flex: 1,
-          backgroundColor: "white",
-          // padding : 20,
-        }}
-      >
-        <View>
-          {/* Danh sách sản phẩm */}
-          {loading ? (
-            <ActivityIndicator size="large" color="blue" />
-          ) : (
-            <FlatList
-              data={products}
-              renderItem={({ item }) => (
-                <View style={{ flex: 1, margin: 5 }}>
-                  <ProductItem item={item} />
-                </View>
-              )}
-              keyExtractor={(item) => item.id.toString()}
-              numColumns={2}
-              columnWrapperStyle={{ justifyContent: "space-between" }}
-              onEndReached={() => fetchProducts(false)}
-              onEndReachedThreshold={0.5}
-              ListFooterComponent={loading ? <ActivityIndicator size="large" color="blue" /> : null}
-            />
-          )}
+    <FlatList
+      ListHeaderComponent={renderHeader}
+      data={products}
+      renderItem={({ item }) => (
+        <View style={{ flex: 1, margin: 5 }}>
+          <ProductItem item={item} />
         </View>
+      )}
+      keyExtractor={(item) => item.id.toString()}
+      numColumns={2} // Hiển thị 2 cột trên mỗi hàng
+      columnWrapperStyle={{ justifyContent: "space-between" }} // Căn chỉnh khoảng cách giữa các cột
+      onEndReached={fetchProducts} // Khi cuộn hết danh sách, gọi API lấy thêm dữ liệu
+      onEndReachedThreshold={0.5} // Load thêm khi còn 50% danh sách
+      ListFooterComponent={loading ? <ActivityIndicator size="large" color="blue" /> : null} // Hiển thị loading khi tải thêm sản phẩm
+    />
 
-      </SafeAreaView >
 
-      <BottomModal
-        onBackdropPress={() => setModalVisible(!modalVisible)}
-        swipeDirection={["up", "down"]}
-        swipeThreshold={200}
-        modalAnimation={
-          new SlideAnimation({
-            slideFrom: "bottom",
-          })
-        }
-        onHardwareBackPress={() => setModalVisible(!modalVisible)}
-        visible={modalVisible}
-        onTouchOutside={() => setModalVisible(!modalVisible)}
-      >
-        <ModalContent style={{ width: "100%", height: 400 }}>
-          <View style={{ marginBottom: 8 }}>
-            <Text style={{ fontSize: 16, fontWeight: "500" }}>
-              Choose your Location
-            </Text>
-
-            <Text style={{ marginTop: 5, fontSize: 16, color: "gray" }}>
-              Select a delivery location to see product availabilty and delivery
-              options
-            </Text>
-          </View>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {/* already added addresses */}
-            {addresses?.map((item, index) => (
-              <Pressable
-                key={index}
-                onPress={() => setSelectedAdress(item)}
-                style={{
-                  width: 140,
-                  height: 140,
-                  borderColor: "#D0D0D0",
-                  borderWidth: 1,
-                  padding: 10,
-                  justifyContent: "center",
-                  alignItems: "center",
-                  gap: 3,
-                  marginRight: 15,
-                  marginTop: 10,
-                  backgroundColor: selectedAddress === item ? "#FBCEB1" : "white"
-                }}
-              >
-                <View
-                  style={{ flexDirection: "row", alignItems: "center", gap: 3 }}
-                >
-                  <Text style={{ fontSize: 13, fontWeight: "bold" }}>
-                    {item?.name}
-                  </Text>
-                  <Entypo name="location-pin" size={24} color="red" />
-                </View>
-
-                <Text
-                  numberOfLines={1}
-                  style={{ width: 130, fontSize: 13, textAlign: "center" }}
-                >
-                  {item?.houseNo},{item?.landmark}
-                </Text>
-
-                <Text
-                  numberOfLines={1}
-                  style={{ width: 130, fontSize: 13, textAlign: "center" }}
-                >
-                  {item?.street}
-                </Text>
-                <Text
-                  numberOfLines={1}
-                  style={{ width: 130, fontSize: 13, textAlign: "center" }}
-                >
-                  India, Bangalore
-                </Text>
-              </Pressable>
-            ))}
-
-            <Pressable
-              onPress={() => {
-                setModalVisible(false);
-                navigation.navigate("Address");
-              }}
-              style={{
-                width: 140,
-                height: 140,
-                borderColor: "#D0D0D0",
-                marginTop: 10,
-                borderWidth: 1,
-                padding: 10,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Text
-                style={{
-                  textAlign: "center",
-                  color: "#0066b2",
-                  fontWeight: "500",
-                }}
-              >
-                Add an Address or pick-up point
-              </Text>
-            </Pressable>
-          </ScrollView>
-
-          <View style={{ flexDirection: "column", gap: 7, marginBottom: 30 }}>
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
-            >
-              <Entypo name="location-pin" size={22} color="#0066b2" />
-              <Text style={{ color: "#0066b2", fontWeight: "400" }}>
-                Enter an Indian pincode
-              </Text>
-            </View>
-
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
-            >
-              <Ionicons name="locate-sharp" size={22} color="#0066b2" />
-              <Text style={{ color: "#0066b2", fontWeight: "400" }}>
-                Use My Currect location
-              </Text>
-            </View>
-
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
-            >
-              <AntDesign name="earth" size={22} color="#0066b2" />
-
-              <Text style={{ color: "#0066b2", fontWeight: "400" }}>
-                Deliver outside India
-              </Text>
-            </View>
-          </View>
-        </ModalContent>
-      </BottomModal>
-    </>
   );
 };
 

@@ -17,9 +17,13 @@ import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { useContext } from "react";
+import { UserType } from "../UserContext";
 
 
 const LoginScreen = () => {
+  const { setUserId, setToken } = useContext(UserType);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -46,30 +50,33 @@ const LoginScreen = () => {
     console.log(user)
 
     axios
-      .post("http://192.168.1.33:8080/api/v1/auth/signin", user)
+      .post("http://192.168.1.124:8080/api/v1/auth/signin", user)
       .then((response) => {
         const user = response.data.user;
         const token = response.data.token;
         const refreshToken = response.data.refreshToken;
-        console.log(user)
+
         AsyncStorage.setItem("userId", user.userId);
         AsyncStorage.setItem("authToken", token);
         AsyncStorage.setItem("refreshToken", refreshToken);
+
+        setUserId(user.userId);
+        setToken(token);
+
         navigation.replace("Main");
       })
       .catch((error) => {
-        navigation.replace("Main");
         console.log('error login: ', error);
         Alert.alert(`Login Error", "Invalid Email ${error}`);
       });
   };
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: "white", alignItems: "center", marginTop: 50 }}
+      style={{ flex: 1, backgroundColor: "white", alignItems: "center" }}
     >
-      <View>
+      <View style={{ paddingTop: 40 }}>
         <Image
-          style={{ width: 150, height: 100 }}
+          style={{ width: 150, height: 150 }}
           source={{
             // uri: "https://assets.stickpng.com/thumbs/6160562276000b00045a7d97.png",
             uri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcREIs419BPvSM2Kc_uT6rwWr1RHkeGMxYDS-UL8phGOtk64wrekwAQZta4UReHnCeIyQTE&usqp=CAU",
@@ -174,7 +181,10 @@ const LoginScreen = () => {
         >
           <Text>Keep me logged in</Text>
 
-          <Text style={{ color: "#007FFF", fontWeight: "500" }}>
+          <Text
+            style={{ color: "#007FFF", fontWeight: "500" }}
+            onPress={() => navigation.navigate("ForgotPassword")}
+          >
             Forgot Password
           </Text>
         </View>

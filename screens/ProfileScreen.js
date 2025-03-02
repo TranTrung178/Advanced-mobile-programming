@@ -12,6 +12,8 @@ import { Ionicons, AntDesign } from "@expo/vector-icons";
 import axios from "axios";
 import { UserType } from "../UserContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import logo from "../assets/Ute2022New.png";
+
 
 const ProfileScreen = () => {
   const { userId, token } = useContext(UserType);
@@ -22,14 +24,16 @@ const ProfileScreen = () => {
     navigation.setOptions({
       headerTitle: "",
       headerStyle: {
-        backgroundColor: "#00CED1",
+        backgroundColor: "#878595",
       },
       headerLeft: () => (
         <Image
-          style={{ width: 140, height: 120, resizeMode: "contain" }}
-          source={{
-            uri: "https://assets.stickpng.com/thumbs/580b57fcd9996e24bc43c518.png",
+          style={{
+            width: 140,
+            height: 120,
+            resizeMode: "contain",
           }}
+          source={logo}
         />
       ),
       headerRight: () => (
