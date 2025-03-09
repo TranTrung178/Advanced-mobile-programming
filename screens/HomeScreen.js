@@ -10,7 +10,6 @@ import {
   Image,
   FlatList,
   ActivityIndicator,
-  ImageBackground,
 } from "react-native";
 import React, { useState, useEffect, useCallback, useContext } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,7 +22,6 @@ import ProductItem from "../components/ProductItem";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
-import { BottomModal, SlideAnimation, ModalContent } from "react-native-modals";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserType } from "../UserContext";
 
@@ -162,6 +160,10 @@ const HomeScreen = () => {
   const [isSorted, setIsSorted] = useState(false);
   const [isCategory, setIsCategory] = useState(false);
 
+  const [searchText, setSearchText] = useState("");
+  const [loadingSearch, setloadingSearch] = useState(false);
+  const [prodSearch, setProdSearch] = useState([]); // Danh sách sản phẩm đang hiển thị
+
 
   const [addresses, setAddresses] = useState([]);
 
@@ -186,6 +188,29 @@ const HomeScreen = () => {
 
   const { userId, setUserId, token, setToken, refreshToken, setRefreshToken } = useContext(UserType);
   const [selectedAddress, setSelectedAdress] = useState("");
+
+
+  const fetchSearchResults = async (text) => {
+    if (!text.trim()) return; // Không tìm kiếm nếu input rỗng
+    console.log(text, 'dfd')
+    setloadingSearch(true);
+    try {
+      const response = await axios.get(
+        `http://192.168.1.170:8080/api/v1/product/search/${text}/1`,
+        {
+          headers: { Authorization: `Bearer ${token}` }, // Thêm token nếu cần xác thực
+        }
+      );
+      const data = response.data.products
+        ? [].concat(response.data.products) // Đảm bảo chuyển thành mảng
+        : [];
+      setProdSearch(data);
+    } catch (error) {
+      console.error("Error fetching search results:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchProducts = async () => {
     if (loading || !hasMore) return;
@@ -371,39 +396,6 @@ const HomeScreen = () => {
 
   const renderHeader = () => (
     <View>
-      <View
-        style={{
-          backgroundColor: "#878595",
-          padding: 10,
-          flexDirection: "row",
-          alignItems: "center",
-          paddingTop: 35,
-          height: 100
-        }}
-      >
-        <Pressable
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            marginHorizontal: 7,
-            gap: 10,
-            backgroundColor: "white",
-            borderRadius: 3,
-            height: 38,
-            flex: 1,
-          }}
-        >
-          <AntDesign
-            style={{ paddingLeft: 10 }}
-            name="search1"
-            size={22}
-            color="black"
-          />
-          <TextInput placeholder="Search Funiture.ute" />
-        </Pressable>
-
-        <Feather name="mic" size={24} color="black" />
-      </View>
       {/* <Pressable
             onPress={() => setModalVisible(!modalVisible)}
             style={{
@@ -445,9 +437,9 @@ const HomeScreen = () => {
               style={{
                 width: 50,
                 height: 50,
-                borderRadius: 25, // Bán kính = 1/2 chiều rộng/chiều cao để tạo hình tròn
-                resizeMode: "cover", // Để ảnh lấp đầy hình tròn mà không bị méo
-                overflow: "hidden", // Đảm bảo ảnh không tràn ra ngoài
+                borderRadius: 25,
+                resizeMode: "cover",
+                overflow: "hidden",
               }}
               source={{ uri: item.image }}
             />
@@ -594,8 +586,6 @@ const HomeScreen = () => {
 
       </View>
 
-
-
       <Text
         style={{
           height: 1,
@@ -692,8 +682,8 @@ const HomeScreen = () => {
           >
             <Image
               style={{
-                width: 150, height: 150, borderRadius: 25, // Bán kính = 1/2 chiều rộng/chiều cao để tạo hình tròn
-                resizeMode: "cover", // Để ảnh lấp đầy hình tròn mà không bị méo
+                width: 150, height: 150, borderRadius: 25,
+                resizeMode: "cover",
                 overflow: "hidden",
               }}
               source={{ uri: `data:image/jpeg;base64,${item?.img1}` }}
@@ -738,36 +728,93 @@ const HomeScreen = () => {
 
     </View>
   );
-  return (
 
-    <FlatList
-      ListHeaderComponent={renderHeader}
-      data={products}
-      renderItem={({ item }) => (
-        <View style={{ flex: 1, margin: 5 }}>
-          <ProductItem item={item} />
-        </View>
+  return (
+    <>
+      {/* Thanh tìm kiếm */}
+      <View style={{ backgroundColor: "#878595", padding: 10, flexDirection: "row", alignItems: "center", paddingTop: 35, height: 100 }}>
+        <Pressable style={{ flexDirection: "row", alignItems: "center", marginHorizontal: 7, gap: 10, backgroundColor: "white", borderRadius: 3, height: 38, flex: 1 }}>
+          <Pressable onPress={() => fetchSearchResults(searchText)} style={{ paddingLeft: 10 }}>
+            <AntDesign name="search1" size={22} color="black" />
+          </Pressable>
+
+          <TextInput
+            placeholder="Search Furniture..."
+            value={searchText}
+            onChangeText={(text) => {
+              setSearchText(text)
+              if (text.length === 0) setloadingSearch(false)
+            }}
+            style={{ flex: 1 }}
+          />
+        </Pressable>
+
+        <Pressable onPress={() => navigation.navigate("Profile")}>
+          <Image
+            source={{ uri: "https://img.freepik.com/premium-vector/avatar-profile-vector-illustrations-website-social-networks-user-profile-icon_495897-224.jpg" }}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 50,
+              // marginBottom: 25,
+            }}
+          />
+        </Pressable>
+      </View>
+
+      {/* Hiển thị danh sách sản phẩm */}
+      {loadingSearch ? (
+        // 🔹 Chỉ hiển thị kết quả tìm kiếm khi `isSearching === true`
+        <FlatList
+          key={"search"}
+          data={prodSearch}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: "space-between" }}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={{ flex: 1, margin: 5 }}>
+              <ProductItem item={item} />
+            </View>
+          )}
+          ListEmptyComponent={
+
+            <View style={{ alignItems: "center", marginVertical: 50 }}>
+              <Feather name="shopping-bag" size={50} color="#B7B7B7" />
+              <Text style={{ fontSize: 16, color: "#777", marginTop: 10 }}>No products available.</Text>
+            </View>
+
+          }
+        />
+      ) : (
+        // 🔹 Nếu không tìm kiếm, hiển thị danh sách sản phẩm trên Home
+        <FlatList
+          key={"grid"}
+          ListHeaderComponent={renderHeader}
+          data={products}
+          renderItem={({ item }) => (
+            <View style={{ flex: 1, margin: 5 }}>
+              <ProductItem item={item} />
+            </View>
+          )}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: "space-between" }}
+          onEndReached={fetchProducts}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={loading ? <ActivityIndicator size="large" color="blue" /> : null}
+          ListEmptyComponent={
+            !loading && (
+              <View style={{ alignItems: "center", marginVertical: 50 }}>
+                <Feather name="shopping-bag" size={50} color="#B7B7B7" />
+                <Text style={{ fontSize: 16, color: "#777", marginTop: 10 }}>No products available.</Text>
+              </View>
+            )
+          }
+        />
       )}
-      
-      keyExtractor={(item) => item.id.toString()}
-      numColumns={2} // Hiển thị 2 cột trên mỗi hàng
-      columnWrapperStyle={{ justifyContent: "space-between" }} // Căn chỉnh khoảng cách giữa các cột
-      onEndReached={fetchProducts} // Khi cuộn hết danh sách, gọi API lấy thêm dữ liệu
-      onEndReachedThreshold={0.5} // Load thêm khi còn 50% danh sách
-      ListFooterComponent={
-        loading ? <ActivityIndicator size="large" color="blue" /> : null
-      } // Hiển thị loading khi tải thêm sản phẩm
-      ListEmptyComponent={
-        !loading && (
-          <View style={{ alignItems: "center", marginVertical: 50 }}>
-            <Feather name="shopping-bag" size={50} color="#B7B7B7" />
-            <Text style={{ fontSize: 16, color: "#777", marginTop: 10 }}>
-              No products available.
-            </Text>
-          </View>
-        )
-      } // Hiển thị nếu không có sản phẩm
-    />
+    </>
+
+
 
   );
 };

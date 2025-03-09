@@ -139,7 +139,7 @@ const CartScreen = () => {
                 <Image
                   style={{ width: 30, height: 30, resizeMode: "contain" }}
                   source={{
-                    uri: "https://assets.stickpng.com/thumbs/5f4924cc68ecc70004ae7065.png",
+                    uri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcREIs419BPvSM2Kc_uT6rwWr1RHkeGMxYDS-UL8phGOtk64wrekwAQZta4UReHnCeIyQTE&usqp=CAU",
                   }}
                 />
                 <Text style={{ color: "green" }}>In Stock</Text>

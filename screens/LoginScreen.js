@@ -78,7 +78,6 @@ const LoginScreen = () => {
         <Image
           style={{ width: 150, height: 150 }}
           source={{
-            // uri: "https://assets.stickpng.com/thumbs/6160562276000b00045a7d97.png",
             uri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcREIs419BPvSM2Kc_uT6rwWr1RHkeGMxYDS-UL8phGOtk64wrekwAQZta4UReHnCeIyQTE&usqp=CAU",
           }}
         />
