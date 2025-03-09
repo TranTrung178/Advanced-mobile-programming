@@ -1,11 +1,14 @@
 import { StyleSheet, Text, View, Pressable, Image } from "react-native";
 import React, { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../redux/CartReducer";
 
 const ProductItem = ({ item }) => {
   const [addedToCart, setAddedToCart] = useState(false);
   const dispatch = useDispatch();
+  const navigation = useNavigation();
+
 
   const addItemToCart = (item) => {
     setAddedToCart(true);
@@ -16,7 +19,21 @@ const ProductItem = ({ item }) => {
   };
 
   return (
-    <Pressable style={styles.container}>
+    <Pressable style={styles.container}
+      onPress={() =>
+        navigation.navigate("Info", {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          img1: item.img1,
+          img2: item.img2,
+          img3: item.img3,
+          description: item.description,
+          status: item.status,
+          stock: item.stock, // Lưu ý sửa `stoke` thành `stock`
+        })
+      }
+    >
       {/* Hiển thị ảnh sản phẩm */}
       <Image
         style={styles.image}

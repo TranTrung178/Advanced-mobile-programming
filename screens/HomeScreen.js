@@ -160,6 +160,7 @@ const HomeScreen = () => {
   const [loading, setLoading] = useState(false); // Trạng thái tải dữ liệu
   const [hasMore, setHasMore] = useState(true);
   const [isSorted, setIsSorted] = useState(false);
+  const [isCategory, setIsCategory] = useState(false);
 
 
   const [addresses, setAddresses] = useState([]);
@@ -185,7 +186,6 @@ const HomeScreen = () => {
 
   const { userId, setUserId, token, setToken, refreshToken, setRefreshToken } = useContext(UserType);
   const [selectedAddress, setSelectedAdress] = useState("");
-  console.log(selectedAddress)
 
   const fetchProducts = async () => {
     if (loading || !hasMore) return;
@@ -193,7 +193,7 @@ const HomeScreen = () => {
     setIsSorted(true);
 
     try {
-      const response = await axios.get(`http://192.168.1.124:8080/api/v1/product/getall/${page}`);
+      const response = await axios.get(`http://192.168.1.170:8080/api/v1/product/getall/${page}`);
 
       // Kiểm tra response.data có dữ liệu hay không trước khi chuyển thành mảng
       const newProducts = response.data.products
@@ -217,12 +217,12 @@ const HomeScreen = () => {
     if (!sortValue) return; // Nếu chưa chọn giá trị sort thì không gọi API
     setLoading(true);
     setProducts([])
+    setIsCategory(true)
     const order = sortValue === "price_high" ? "desc" : "asc";
-    console.log(order,'đewe', sortValue)
 
     try {
       const response = await axios.get(
-        `http://192.168.1.124:8080/api/v1/product/sort/${order}`,
+        `http://192.168.1.170:8080/api/v1/product/sort/${order}`,
         {
           headers: { Authorization: `Bearer ${token}` }, // Thêm token nếu cần xác thực
         }
@@ -243,35 +243,23 @@ const HomeScreen = () => {
 
   useEffect(() => {
     if (!isSorted) {
-      fetchProducts(); 
+      fetchProducts();
     }
+
   }, [isSorted]);
 
-  const [lastProducts, setLastProducts] = useState([]);
-
-  const fetchLast10Products = async () => {
-    try {
-      const response = await axios.get("http://192.168.1.124:8080/api/v1/product/last-10");
-      const products = response.data ? [].concat(response.data) : [];
-      setLastProducts(products);
-    } catch (error) {
-      console.error("Lỗi khi lấy 10 sản phẩm mới nhất:", error);
-    }
-  };
-
-  // Gọi API khi component mount
   useEffect(() => {
-    fetchLast10Products();
-  }, []);
-
-
+    if (sortValue) {
+      fetchProductSort(sortValue);
+    }
+  }, [sortValue]);
 
 
   //    Category
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get("http://192.168.1.124:8080/api/v1/category/getall");
+        const response = await axios.get("http://192.168.1.170:8080/api/v1/category/getall");
         const categoryData = response.data.map((cat) => ({
           label: cat.name,
           value: cat.id.toString(),
@@ -288,6 +276,57 @@ const HomeScreen = () => {
 
   const onDropdownOpen = useCallback(() => {
     setOpen(true);
+  }, []);
+
+
+  // Fetch product by category
+  const fetchProductsByCategory = async (categoryId) => {
+
+    setProducts([]);
+    setPage(1);
+
+    try {
+      if (categoryId === 'all') {
+        setLoading(false)
+        setHasMore(true)
+        fetchProducts();
+        return;
+      }
+      const url = `http://192.168.1.170:8080/api/v1/product/category/${categoryId}/1`
+
+      const response = await axios.get(url);
+
+      const newProducts = response.data.products || [];
+
+
+
+      setProducts(newProducts);
+    } catch (error) {
+      console.error("Lỗi khi lấy sản phẩm theo danh mục:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!isCategory) return
+    fetchProductsByCategory(category);
+  }, [category]);
+
+
+  const [lastProducts, setLastProducts] = useState([]);
+
+  const fetchLast10Products = async () => {
+    try {
+      const response = await axios.get("http://192.168.1.170:8080/api/v1/product/last-10");
+      const products = response.data ? [].concat(response.data) : [];
+      setLastProducts(products);
+    } catch (error) {
+      console.error("Lỗi khi lấy 10 sản phẩm mới nhất:", error);
+    }
+  };
+
+  // Gọi API khi component mount
+  useEffect(() => {
+    fetchLast10Products();
   }, []);
 
 
@@ -311,13 +350,13 @@ const HomeScreen = () => {
       console.log("error", error);
     }
   };
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const storedUserId = await AsyncStorage.getItem("userId");
         const storedToken = await AsyncStorage.getItem("authToken");
         const storedRefreshToken = await AsyncStorage.getItem("refreshToken");
-        console.log('123main', storedUserId)
 
         if (storedUserId) setUserId(storedUserId);
         if (storedToken) setToken(storedToken);
@@ -360,7 +399,7 @@ const HomeScreen = () => {
             size={22}
             color="black"
           />
-          <TextInput placeholder="Search Amazon.in" />
+          <TextInput placeholder="Search Funiture.ute" />
         </Pressable>
 
         <Feather name="mic" size={24} color="black" />
@@ -509,19 +548,22 @@ const HomeScreen = () => {
               marginBottom: open ? 50 : 15,
             }}
             open={open}
-            value={category} //genderValue
+            value={category}
             items={items}
             setOpen={setOpen}
-            setValue={setCategory}
+            setValue={(val) => {
+              setCategory(val)
+              setIsCategory(true)
+              // fetchProductsByCategory(category)
+            }}
             setItems={setItems}
             placeholder="choose category"
             placeholderStyle={styles.placeholderStyles}
             onOpen={onDropdownOpen}
-            // onChangeValue={onChange}
             zIndex={3000}
             zIndexInverse={1000}
-            dropDownDirection="BOTTOM" // Hiển thị dropdown xuống dưới
-            listMode="SCROLLVIEW" // Cho phép scroll nếu danh sách dài
+            dropDownDirection="BOTTOM"
+            listMode="SCROLLVIEW"
             maxHeight={250}
           />
         </View>
@@ -629,13 +671,14 @@ const HomeScreen = () => {
             onPress={() =>
               navigation.navigate("Info", {
                 id: item.id,
-                title: item.title,
-                price: item?.price,
-                carouselImages: item.carouselImages,
-                color: item?.color,
-                size: item?.size,
-                oldPrice: item?.oldPrice,
-                item: item,
+                name: item.name,
+                price: item.price,
+                img1: item.img1,
+                img2: item.img2,
+                img3: item.img3,
+                description: item.description,
+                status: item.status,
+                stock: item.stoke,
               })
             }
             style={{
@@ -651,7 +694,8 @@ const HomeScreen = () => {
               style={{
                 width: 150, height: 150, borderRadius: 25, // Bán kính = 1/2 chiều rộng/chiều cao để tạo hình tròn
                 resizeMode: "cover", // Để ảnh lấp đầy hình tròn mà không bị méo
-                overflow: "hidden", }}
+                overflow: "hidden",
+              }}
               source={{ uri: `data:image/jpeg;base64,${item?.img1}` }}
             />
 
@@ -695,6 +739,7 @@ const HomeScreen = () => {
     </View>
   );
   return (
+
     <FlatList
       ListHeaderComponent={renderHeader}
       data={products}
@@ -703,14 +748,26 @@ const HomeScreen = () => {
           <ProductItem item={item} />
         </View>
       )}
+      
       keyExtractor={(item) => item.id.toString()}
       numColumns={2} // Hiển thị 2 cột trên mỗi hàng
       columnWrapperStyle={{ justifyContent: "space-between" }} // Căn chỉnh khoảng cách giữa các cột
       onEndReached={fetchProducts} // Khi cuộn hết danh sách, gọi API lấy thêm dữ liệu
       onEndReachedThreshold={0.5} // Load thêm khi còn 50% danh sách
-      ListFooterComponent={loading ? <ActivityIndicator size="large" color="blue" /> : null} // Hiển thị loading khi tải thêm sản phẩm
+      ListFooterComponent={
+        loading ? <ActivityIndicator size="large" color="blue" /> : null
+      } // Hiển thị loading khi tải thêm sản phẩm
+      ListEmptyComponent={
+        !loading && (
+          <View style={{ alignItems: "center", marginVertical: 50 }}>
+            <Feather name="shopping-bag" size={50} color="#B7B7B7" />
+            <Text style={{ fontSize: 16, color: "#777", marginTop: 10 }}>
+              No products available.
+            </Text>
+          </View>
+        )
+      } // Hiển thị nếu không có sản phẩm
     />
-
 
   );
 };

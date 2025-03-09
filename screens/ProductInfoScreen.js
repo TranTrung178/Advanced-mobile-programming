@@ -23,6 +23,7 @@ const ProductInfoScreen = () => {
   const [addedToCart, setAddedToCart] = useState(false);
   const height = (width * 100) / 100;
   const dispatch = useDispatch();
+
   const addItemToCart = (item) => {
     setAddedToCart(true);
     dispatch(addToCart(item));
@@ -30,13 +31,16 @@ const ProductInfoScreen = () => {
       setAddedToCart(false);
     }, 60000);
   };
+
   const cart = useSelector((state) => state.cart.cart);
   console.log(cart);
+
   return (
     <ScrollView
       style={{ marginTop: 55, flex: 1, backgroundColor: "white" }}
       showsVerticalScrollIndicator={false}
     >
+      {/* Search Bar */}
       <View
         style={{
           backgroundColor: "#00CED1",
@@ -69,42 +73,64 @@ const ProductInfoScreen = () => {
         <Feather name="mic" size={24} color="black" />
       </View>
 
+      {/* Product Images */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {route.params.carouselImages.map((item, index) => (
-          <ImageBackground
-            style={{ width, height, marginTop: 25, resizeMode: "contain" }}
-            source={{ uri: item }}
-            key={index}
-          >
-            <View
-              style={{
-                padding: 20,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
+        {[route.params.img1, route.params.img2, route.params.img3]
+          .filter(Boolean)
+          .map((image, index) => (
+            <ImageBackground
+              style={{ width, height, marginTop: 25, resizeMode: "contain" }}
+              source={{ uri: `data:image/jpeg;base64,${image}` }}
+              key={index}
             >
               <View
                 style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: "#C60C30",
-                  justifyContent: "center",
-                  alignItems: "center",
+                  padding: 20,
                   flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                 }}
               >
-                <Text
+                <View
                   style={{
-                    color: "white",
-                    textAlign: "center",
-                    fontWeight: "600",
-                    fontSize: 12,
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: "#C60C30",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    flexDirection: "row",
                   }}
                 >
-                  20% off
-                </Text>
+                  <Text
+                    style={{
+                      color: "white",
+                      textAlign: "center",
+                      fontWeight: "600",
+                      fontSize: 12,
+                    }}
+                  >
+                    20% off
+                  </Text>
+                </View>
+
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: "#E0E0E0",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    flexDirection: "row",
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="share-variant"
+                    size={24}
+                    color="black"
+                  />
+                </View>
               </View>
 
               <View
@@ -116,59 +142,25 @@ const ProductInfoScreen = () => {
                   justifyContent: "center",
                   alignItems: "center",
                   flexDirection: "row",
+                  marginTop: "auto",
+                  marginLeft: 20,
+                  marginBottom: 20,
                 }}
               >
-                <MaterialCommunityIcons
-                  name="share-variant"
-                  size={24}
-                  color="black"
-                />
+                <AntDesign name="hearto" size={24} color="black" />
               </View>
-            </View>
-
-            <View
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-                backgroundColor: "#E0E0E0",
-                justifyContent: "center",
-                alignItems: "center",
-                flexDirection: "row",
-                marginTop: "auto",
-                marginLeft: 20,
-                marginBottom: 20,
-              }}
-            >
-              <AntDesign name="hearto" size={24} color="black" />
-            </View>
-          </ImageBackground>
-        ))}
+            </ImageBackground>
+          ))}
       </ScrollView>
 
+      {/* Product Details */}
       <View style={{ padding: 10 }}>
         <Text style={{ fontSize: 15, fontWeight: "500" }}>
-          {route?.params?.title}
+          {route?.params?.name}
         </Text>
 
         <Text style={{ fontSize: 18, fontWeight: "600", marginTop: 6 }}>
           ₹{route?.params?.price}
-        </Text>
-      </View>
-
-      <Text style={{ height: 1, borderColor: "#D0D0D0", borderWidth: 1 }} />
-
-      <View style={{ flexDirection: "row", alignItems: "center", padding: 10 }}>
-        <Text>Color: </Text>
-        <Text style={{ fontSize: 15, fontWeight: "bold" }}>
-          {route?.params?.color}
-        </Text>
-      </View>
-
-      <View style={{ flexDirection: "row", alignItems: "center", padding: 10 }}>
-        <Text>Size: </Text>
-        <Text style={{ fontSize: 15, fontWeight: "bold" }}>
-          {route?.params?.size}
         </Text>
       </View>
 
@@ -198,12 +190,18 @@ const ProductInfoScreen = () => {
         </View>
       </View>
 
-      <Text style={{ color: "green", marginHorizontal: 10, fontWeight: "500" }}>
-        IN Stock
+      <Text
+        style={{
+          color: route?.params?.stoke > 0 ? "green" : "red",
+          marginHorizontal: 10,
+          fontWeight: "500",
+        }}
+      >
+        {route?.params?.stoke > 0 ? "IN Stock" : "Out of Stock"}
       </Text>
 
       <Pressable
-        onPress={() => addItemToCart(route?.params?.item)}
+        onPress={() => addItemToCart(route?.params)}
         style={{
           backgroundColor: "#FFC72C",
           padding: 10,
@@ -239,6 +237,7 @@ const ProductInfoScreen = () => {
     </ScrollView>
   );
 };
+
 
 export default ProductInfoScreen;
 

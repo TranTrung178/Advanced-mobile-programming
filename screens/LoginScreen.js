@@ -50,7 +50,7 @@ const LoginScreen = () => {
     console.log(user)
 
     axios
-      .post("http://192.168.1.124:8080/api/v1/auth/signin", user)
+      .post("http://192.168.1.170:8080/api/v1/auth/signin", user)
       .then((response) => {
         const user = response.data.user;
         const token = response.data.token;
